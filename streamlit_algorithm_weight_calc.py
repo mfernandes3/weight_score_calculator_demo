@@ -36,9 +36,9 @@ def plot_weighted_score(soft_tags_values, NPS_values, distance_values, w1, w2, w
     # Plot the data as a bar plot side by side
     bar_width = 0.3
     index = np.arange(len(soft_tags_values))
-    ax1.bar(index, soft_tags_values, bar_width, label="Soft Tags to exclude", color="orange")
+    ax1.bar(index, soft_tags_values, bar_width, label="Number of Soft Tags to exclude", color="orange")
     ax1.bar(index + bar_width, NPS_values, bar_width, label="NPS", color="magenta")
-    ax1.bar(index + 2 * bar_width, distance_values, bar_width, label="Distance", color="cyan")
+    ax1.bar(index + 2 * bar_width, distance_values, bar_width, label="Distance (km)", color="cyan")
     ax1.set_xlabel("Input data")
     ax1.set_ylabel("Value")
     ax1.legend()
@@ -68,9 +68,9 @@ def main():
         # Move sliders to the sidebar
     with st.sidebar:
         # Get user input for values and weights
-        soft_tags_values = st.slider("Soft Tags to Exclude Value", min_value=0, max_value=10, value=[0])
+        soft_tags_values = st.slider("Number of Soft Tags to Exclude Value", min_value=0, max_value=10, value=[0])
         NPS_values = st.slider("NPS Value", min_value=0, max_value=10, value=[0])
-        distance_values = st.slider("Distance Value", min_value=0, max_value=30, value=[0])
+        distance_values = st.slider("Distance (km)", min_value=0, max_value=30, value=[0])
         weight_soft_tags = st.slider("Weight for Soft Tags", min_value=-10, max_value=10, value=0)
         weight_NPS = st.slider("Weight for NPS", min_value=-10, max_value=10, value=0)
         weight_distance = st.slider("Weight for Distance", min_value=-10, max_value=10, value=0)
