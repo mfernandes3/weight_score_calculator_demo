@@ -80,7 +80,7 @@ def main():
         )
 
     # Display the weighted score
-    st.text("Weighted Score:", result)
+    st.text("Weighted Score: {}".format(result))
 
     # Generate and display the plot
     plot_weighted_score(soft_tags_values, NPS_values, distance_values, weight_soft_tags, weight_NPS, weight_distance)
