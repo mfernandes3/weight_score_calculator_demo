@@ -68,7 +68,7 @@ def main():
         # Move sliders to the sidebar
     with st.sidebar:
         # Get user input for values and weights
-        soft_tags_values = st.slider("Number of Soft Tags to Exclude Value", min_value=0, max_value=10, value=[0])
+        soft_tags_values = st.slider("Number of Soft Tags to Exclude Value", min_value=0, max_value=6, value=[0])
         NPS_values = st.slider("NPS Value", min_value=0, max_value=10, value=[0])
         distance_values = st.slider("Distance (km)", min_value=0, max_value=30, value=[0])
         weight_soft_tags = st.slider("Weight for Soft Tags", min_value=-10, max_value=10, value=0)
