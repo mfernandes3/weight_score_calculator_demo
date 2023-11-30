@@ -57,6 +57,7 @@ def plot_weighted_score(soft_tags_values, NPS_values, distance_values, w1, w2, w
     ax3.set_ylabel("Weighted Score")
     ax3.set_ylim(-100, 100)
     ax3.set_xticks(range(len(scores)))
+    ax3.legend(["Weighted Score"])  # Add legend label
 
     # Display the plot using Streamlit's `st.pyplot()` function
     st.pyplot(fig)
