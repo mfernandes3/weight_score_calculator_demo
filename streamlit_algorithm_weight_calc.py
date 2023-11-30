@@ -70,7 +70,7 @@ def main():
         # Get user input for values and weights
         soft_tags_values = st.slider("Soft Tags to Exclude Value", min_value=0, max_value=10, value=[0])
         NPS_values = st.slider("NPS Value", min_value=0, max_value=10, value=[0])
-        distance_values = st.slider("Distance Value", min_value=0, max_value=100, value=[0])
+        distance_values = st.slider("Distance Value", min_value=0, max_value=30, value=[0])
         weight_soft_tags = st.slider("Weight for Soft Tags", min_value=-10, max_value=10, value=0)
         weight_NPS = st.slider("Weight for NPS", min_value=-10, max_value=10, value=0)
         weight_distance = st.slider("Weight for Distance", min_value=-10, max_value=10, value=0)
