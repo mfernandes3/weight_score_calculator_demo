@@ -4,6 +4,20 @@ import numpy as np
 
 
 def calculate_weighted_score(soft_tags, NPS, distance, w1, w2, w3):
+    """
+    Calculate the weighted score based on the given parameters.
+
+    Parameters:
+    soft_tags (float): The soft tags value.
+    NPS (float): The NPS value.
+    distance (float): The distance value.
+    w1 (float): The weight for soft tags.
+    w2 (float): The weight for NPS.
+    w3 (float): The weight for distance.
+
+    Returns:
+    float: The calculated weighted score.
+    """
     if all(value == 0 for value in [soft_tags, NPS, distance]) or all(
         weight == 0 for weight in [w1, w2, w3]
     ):
@@ -16,12 +30,26 @@ def calculate_weighted_score(soft_tags, NPS, distance, w1, w2, w3):
 
     mapped_score = (
         (weighted_score - min_raw_score) / (max_raw_score - min_raw_score)
-    ) * 1000
+    ) * 100
 
     return round(mapped_score, 2)
 
 
 def plot_weighted_score(soft_tags, NPS, distance, w1, w2, w3):
+    """
+    Plots the weighted score based on the input data and weights.
+
+    Parameters:
+    soft_tags (float): Number of Soft Tags to exclude.
+    NPS (float): NPS (Net Promoter Score).
+    distance (float): Distance in kilometers.
+    w1 (float): Weight 1.
+    w2 (float): Weight 2.
+    w3 (float): Weight 3.
+
+    Returns:
+    None
+    """
     result = calculate_weighted_score(soft_tags, NPS, distance, w1, w2, w3)
 
     # Create a Matplotlib figure
@@ -60,6 +88,13 @@ def plot_weighted_score(soft_tags, NPS, distance, w1, w2, w3):
 
 
 def main():
+    """
+    Main function that calculates and displays the weighted score.
+
+    This function takes user input for values and weights, calculates the weighted score using the
+    `calculate_weighted_score` function, and displays the result along with a plot using the
+    `plot_weighted_score` function.
+    """
     st.title("Weighted Score Calculator")
     # Move sliders to the sidebar
     with st.sidebar:
