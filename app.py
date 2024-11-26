@@ -233,15 +233,11 @@ def main():
         - **NPS**: Higher is better (0-100)
         - **Google**: Higher is better (1-5)
         
-        The values are automatically normalized and scaled to ensure fair comparison.
         """)
 
         # Add help text for weights
         st.info("""
         Weights (-1 to 1) determine each factor's influence:
-        • Jameda: Strongest impact per unit
-        • NPS: Moderate impact due to wider range
-        • Google: Lower impact due to variability
         """)
 
         # Get user input for values and weights with defaults
