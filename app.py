@@ -229,9 +229,9 @@ def main():
         # Add explanation about scaling
         st.markdown("""
         ### How the scoring works:
-        - **Jameda**: Higher is better (1-5)
-        - **NPS**: Higher is better (-100-100)
-        - **Google**: Higher is better (1-5)
+        - **Jameda**: Higher is better (1 to 5)
+        - **NPS**: Higher is better (-100 to 100)
+        - **Google**: Higher is better (1 to 5)
         
         """)
 
