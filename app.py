@@ -151,28 +151,14 @@ def plot_weighted_score(jameda, NPS, google, w1, w2, w3):
     st.pyplot(fig)
 
 
-def calculate_trust_level(jameda_count, nps_count, google_count):
+def calculate_trust_level(nps_count):
     """
-    Calculate trust level based on number of ratings for each source
+    Calculate trust level based solely on NPS response count.
+    Returns trust level (string) and trust score (float).
+    Expecting at least 50 NPS responses as baseline.
     """
-    # Calculate individual trust scores (0-1)
-    total_sources = 0
-    trust_sum = 0
-
-    if jameda_count > 0:
-        trust_sum += (jameda_count / 10) * 0.3  # Normalize by expecting 10 reviews
-        total_sources += 1
-
-    if nps_count > 0:
-        trust_sum += (nps_count / 20) * 0.4  # Normalize by expecting 20 responses
-        total_sources += 1
-
-    if google_count > 0:
-        trust_sum += (google_count / 10) * 0.3  # Normalize by expecting 10 reviews
-        total_sources += 1
-
-    # Calculate average trust score, handling case where no sources exist
-    trust_score = trust_sum / total_sources if total_sources > 0 else 0
+    # Calculate trust score (0-1) based on NPS count
+    trust_score = min(1.0, nps_count / 50)
 
     # Convert to trust level
     if trust_score >= 0.5:
@@ -189,7 +175,7 @@ def main():
 
     This function takes user input for values and weights, calculates the weighted score using the
     `calculate_weighted_score` function, and displays the result along with a plot using the
-    `plot_weighted_score` function.
+    `plot_weighted_score` function. NPS scores significantly affect trust levels.
     """
     st.title("BD-Physician Niceness Index Calculator")
 
@@ -199,56 +185,40 @@ def main():
     - **Internal Data**: NPS (Net Promoter Score)
     - **External Data**: Jameda and Google Ratings
 
+    **Note:** Trust levels are primarily influenced by NPS scores. We expect at least 50 NPS responses for reliable trust level assessment.
     """)
 
     with st.sidebar:
         st.header("Input Parameters")
 
-        # Add premium account toggle
-        jameda_premium = st.checkbox(
-            "Jameda Premium Account",
-            help="Check if the physician has a premium Jameda account",
-        )
-
         # Rating counts (number of reviews)
         st.subheader("Number of Ratings")
-        jameda_count = st.number_input("Number of Jameda Reviews", min_value=0, value=4)
         nps_count = st.number_input("Number of NPS Responses", min_value=0, value=30)
-        google_count = st.number_input("Number of Google Reviews", min_value=0, value=3)
 
         # Rating values (actual scores)
         st.subheader("Rating Values")
         jameda = st.slider(
-            "Jameda Rating", min_value=1.0, max_value=5.0, value=4.0, step=0.1
+            "Jameda Rating", min_value=0.0, max_value=5.0, value=3.0, step=0.1
         )
         NPS = st.slider("NPS Value", min_value=-100, max_value=100, value=70, step=5)
         google = st.slider(
-            "Google Rating", min_value=1.0, max_value=5.0, value=4.0, step=0.1
+            "Google Rating", min_value=0.0, max_value=5.0, value=3.0, step=0.1
         )
-
-        # Add explanation about scaling
-        st.markdown("""
-        ### How the scoring works:
-        - **Jameda**: Higher is better (1 to 5)
-        - **NPS**: Higher is better (-100 to 100)
-        - **Google**: Higher is better (1 to 5)
-        
-        """)
 
         # Add help text for weights
         st.info("""
         Weights (-1 to 1) determine each factor's influence:
         """)
 
-        # Get user input for values and weights with defaults
+        # Get user input for weights with defaults
         weight_jameda = st.slider(
-            "Weight for Jameda", min_value=-1.0, max_value=1.0, value=0.3, step=0.1
+            "Weight for Jameda", min_value=-1.0, max_value=1.0, value=0.4, step=0.1
         )
         weight_NPS = st.slider(
             "Weight for NPS", min_value=-1.0, max_value=1.0, value=0.4, step=0.1
         )
         weight_google = st.slider(
-            "Weight for Google", min_value=-1.0, max_value=1.0, value=0.3, step=0.1
+            "Weight for Google", min_value=-1.0, max_value=1.0, value=0.4, step=0.1
         )
 
         # Add weight validation
@@ -258,22 +228,16 @@ def main():
 
     # Calculate the weighted score
     result = calculate_weighted_score(
-        jameda, NPS, google, weight_jameda, weight_NPS, weight_google, jameda_premium
+        jameda, NPS, google, weight_jameda, weight_NPS, weight_google
     )
 
     # Calculate and display trust level
-    trust_level, trust_score = calculate_trust_level(
-        jameda_count, nps_count, google_count
-    )
+    trust_level, trust_score = calculate_trust_level(nps_count)
 
     col1, col2 = st.columns(2)
     with col1:
         st.subheader("Trust Level")
         st.text(f"Trust Level: {trust_level} ({trust_score:.2f})")
-        st.text("Based on:")
-        st.text(f"• Jameda: {jameda_count} reviews")
-        st.text(f"• NPS: {nps_count} responses")
-        st.text(f"• Google: {google_count} reviews")
 
     with col2:
         # Display the weighted score
