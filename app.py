@@ -15,19 +15,21 @@ def normalize_input(value, min_val, max_val, inverse=False):
     return 1 - normalized if inverse else normalized
 
 
-def calculate_weighted_score(soft_tags, NPS, distance, w1, w2, w3):
+def calculate_weighted_score(jameda, NPS, google, w1, w2, w3, jameda_premium=False):
     """Calculate the weighted score based on the given parameters."""
+    # Adjust Jameda weight if premium account (reduce influence)
+    if jameda_premium:
+        w1 *= 0.7  # Reduce Jameda influence by 30% for premium accounts
+
     # Normalize inputs considering their different scales and meanings
-    # For soft_tags and distance, lower is better, so we use inverse normalization
-    norm_soft_tags = normalize_input(soft_tags, 0, 6, inverse=True)  # Lower is better
-    norm_nps = normalize_input(NPS, 0, 100)  # Higher is better
-    norm_distance = normalize_input(distance, 0, 30, inverse=True)  # Lower is better
+    norm_jameda = normalize_input(jameda, 0, 5)  # Higher is better (1-5 scale)
+    norm_nps = normalize_input(NPS, -100, 100)  # Higher is better
+    norm_google = normalize_input(google, 0, 5)  # Higher is better (1-5 scale)
 
     # Apply scale factors to account for different importance levels
-    # These factors can be adjusted based on business requirements
-    soft_tags_factor = 1.0  # Base factor
+    jameda_factor = 1.0  # Base factor
     nps_factor = 0.7  # Slightly less impact as it's more volatile
-    distance_factor = 0.5  # Less impact as it's more variable
+    google_factor = 1.0  # Equal importance to Jameda
 
     # Check for zero weights
     total_weight = abs(w1) + abs(w2) + abs(w3)
@@ -36,20 +38,20 @@ def calculate_weighted_score(soft_tags, NPS, distance, w1, w2, w3):
 
     # Calculate normalized weighted score with scale factors
     weighted_score = (
-        (norm_soft_tags * w1 * soft_tags_factor)
+        (norm_jameda * w1 * jameda_factor)
         + (norm_nps * w2 * nps_factor)
-        + (norm_distance * w3 * distance_factor)
+        + (norm_google * w3 * google_factor)
     ) / total_weight
 
-    # Map to -100 to 100 range
+    # Map to 0 to 100 range (changed from -100 to 100 for better interpretation)
     mapped_score = weighted_score * 100
 
     return round(mapped_score, 2)
 
 
-def plot_weighted_score(soft_tags, NPS, distance, w1, w2, w3):
+def plot_weighted_score(jameda, NPS, google, w1, w2, w3):
     """Plots the weighted score based on the input data and weights."""
-    result = calculate_weighted_score(soft_tags, NPS, distance, w1, w2, w3)
+    result = calculate_weighted_score(jameda, NPS, google, w1, w2, w3)
 
     # Create a larger Matplotlib figure with better spacing
     fig = plt.figure(figsize=(20, 8))
@@ -63,8 +65,8 @@ def plot_weighted_score(soft_tags, NPS, distance, w1, w2, w3):
     bar_width = 0.6
 
     # Plot 1: Input Values
-    labels = ["Soft Tags", "NPS", "Distance"]
-    values = [soft_tags, NPS, distance]
+    labels = ["Jameda", "NPS", "Google"]
+    values = [jameda, NPS, google]
     bars1 = ax1.bar(labels, values, bar_width, color=colors)
     ax1.set_title("Input Values", pad=20, fontsize=14, fontweight="bold")
     ax1.set_ylabel("Value", fontsize=12)
@@ -82,7 +84,7 @@ def plot_weighted_score(soft_tags, NPS, distance, w1, w2, w3):
         )
 
     # Plot 2: Weights
-    labels = ["Soft Tags\nWeight", "NPS\nWeight", "Distance\nWeight"]
+    labels = ["Jameda\nWeight", "NPS\nWeight", "Google\nWeight"]
     weights = [w1, w2, w3]
     bars2 = ax2.bar(labels, weights, bar_width, color=colors)
     ax2.set_title("Weights", pad=20, fontsize=14, fontweight="bold")
@@ -103,15 +105,18 @@ def plot_weighted_score(soft_tags, NPS, distance, w1, w2, w3):
             va=va,
         )
 
-    # Plot 3: Final Score with improved design
+    # Plot 3: Final Score
     color = "#2ECC71" if result > 0 else ("#E74C3C" if result < 0 else "#95A5A6")
     ax3.bar(["Final Score"], [result], bar_width * 1.5, color=color)
     ax3.set_title("Weighted Score", pad=20, fontsize=14, fontweight="bold")
-    ax3.set_ylabel("Score (-100 to 100)", fontsize=12)
+    ax3.set_ylabel("Score (0 to 100)", fontsize=12)
+
+    # Adjust y-axis limits to accommodate negative scores
+    ax3.set_ylim(-110, 110)  # Adjusted to show negative values properly
 
     # Add horizontal lines for better readability
     ax3.axhline(y=0, color="black", linestyle="-", linewidth=0.5)
-    for y in [-50, 50]:
+    for y in [25, 75]:
         ax3.axhline(y=y, color="gray", linestyle="--", alpha=0.3)
 
     # Set y-axis limits with padding
@@ -146,6 +151,38 @@ def plot_weighted_score(soft_tags, NPS, distance, w1, w2, w3):
     st.pyplot(fig)
 
 
+def calculate_trust_level(jameda_count, nps_count, google_count):
+    """
+    Calculate trust level based on number of ratings for each source
+    """
+    # Calculate individual trust scores (0-1)
+    total_sources = 0
+    trust_sum = 0
+
+    if jameda_count > 0:
+        trust_sum += (jameda_count / 10) * 0.3  # Normalize by expecting 10 reviews
+        total_sources += 1
+
+    if nps_count > 0:
+        trust_sum += (nps_count / 20) * 0.4  # Normalize by expecting 20 responses
+        total_sources += 1
+
+    if google_count > 0:
+        trust_sum += (google_count / 10) * 0.3  # Normalize by expecting 10 reviews
+        total_sources += 1
+
+    # Calculate average trust score, handling case where no sources exist
+    trust_score = trust_sum / total_sources if total_sources > 0 else 0
+
+    # Convert to trust level
+    if trust_score >= 0.5:
+        return "High", trust_score
+    elif trust_score >= 0.2:
+        return "Medium", trust_score
+    else:
+        return "Low", trust_score
+
+
 def main():
     """
     Main function that calculates and displays the weighted score.
@@ -154,28 +191,47 @@ def main():
     `calculate_weighted_score` function, and displays the result along with a plot using the
     `plot_weighted_score` function.
     """
-    st.title("Weighted Score Calculator")
+    st.title("BD-Physician Niceness Index Calculator")
 
-    # Add explanation
+    # Update explanation
     st.markdown("""
-    This calculator helps you compute a weighted score based on three parameters:
-    - **Soft Tags**: Number of tags to exclude (0-6)
-    - **NPS**: Net Promoter Score (0-100)
-    - **Distance**: Distance in kilometers (0-30)
-    
-    Adjust the weights in the sidebar to control how each parameter influences the final score.
-    Positive weights increase the score, negative weights decrease it.
+    This calculator generates the BD-Physician Niceness Index based on:
+    - **Internal Data**: NPS (Net Promoter Score)
+    - **External Data**: Jameda and Google Ratings
+
     """)
 
     with st.sidebar:
         st.header("Input Parameters")
 
+        # Add premium account toggle
+        jameda_premium = st.checkbox(
+            "Jameda Premium Account",
+            help="Check if the physician has a premium Jameda account",
+        )
+
+        # Rating counts (number of reviews)
+        st.subheader("Number of Ratings")
+        jameda_count = st.number_input("Number of Jameda Reviews", min_value=0, value=4)
+        nps_count = st.number_input("Number of NPS Responses", min_value=0, value=30)
+        google_count = st.number_input("Number of Google Reviews", min_value=0, value=3)
+
+        # Rating values (actual scores)
+        st.subheader("Rating Values")
+        jameda = st.slider(
+            "Jameda Rating", min_value=1.0, max_value=5.0, value=4.0, step=0.1
+        )
+        NPS = st.slider("NPS Value", min_value=-100, max_value=100, value=70, step=5)
+        google = st.slider(
+            "Google Rating", min_value=1.0, max_value=5.0, value=4.0, step=0.1
+        )
+
         # Add explanation about scaling
         st.markdown("""
         ### How the scoring works:
-        - **Soft Tags**: Lower is better (0-6)
+        - **Jameda**: Higher is better (1-5)
         - **NPS**: Higher is better (0-100)
-        - **Distance**: Lower is better (0-30km)
+        - **Google**: Higher is better (1-5)
         
         The values are automatically normalized and scaled to ensure fair comparison.
         """)
@@ -183,59 +239,73 @@ def main():
         # Add help text for weights
         st.info("""
         Weights (-1 to 1) determine each factor's influence:
-        • Soft Tags: Strongest impact per unit
+        • Jameda: Strongest impact per unit
         • NPS: Moderate impact due to wider range
-        • Distance: Lower impact due to variability
+        • Google: Lower impact due to variability
         """)
 
         # Get user input for values and weights with defaults
-        soft_tags = st.slider(
-            "Number of Soft Tags to Exclude Value",
-            min_value=0,
-            max_value=6,
-            value=1,
-            step=1,
-        )
-        NPS = st.slider("NPS Value", min_value=0, max_value=100, value=70, step=5)
-        distance = st.slider(
-            "Distance (km)", min_value=0, max_value=30, value=10, step=5
-        )
-        weight_soft_tags = st.slider(
-            "Weight for Soft Tags", min_value=-1.0, max_value=1.0, value=-0.1, step=0.1
+        weight_jameda = st.slider(
+            "Weight for Jameda", min_value=-1.0, max_value=1.0, value=0.3, step=0.1
         )
         weight_NPS = st.slider(
-            "Weight for NPS", min_value=-1.0, max_value=1.0, value=0.7, step=0.1
+            "Weight for NPS", min_value=-1.0, max_value=1.0, value=0.4, step=0.1
         )
-        weight_distance = st.slider(
-            "Weight for Distance", min_value=-1.0, max_value=1.0, value=-0.2, step=0.1
+        weight_google = st.slider(
+            "Weight for Google", min_value=-1.0, max_value=1.0, value=0.3, step=0.1
         )
 
         # Add weight validation
-        total_weight = abs(weight_soft_tags) + abs(weight_NPS) + abs(weight_distance)
+        total_weight = abs(weight_jameda) + abs(weight_NPS) + abs(weight_google)
         if total_weight == 0:
             st.warning("⚠️ All weights are set to 0. The score will be 0.")
 
     # Calculate the weighted score
     result = calculate_weighted_score(
-        soft_tags, NPS, distance, weight_soft_tags, weight_NPS, weight_distance
+        jameda, NPS, google, weight_jameda, weight_NPS, weight_google, jameda_premium
     )
 
-    # Display the weighted score
-    st.text("Weighted Score: {}".format(result))
+    # Calculate and display trust level
+    trust_level, trust_score = calculate_trust_level(
+        jameda_count, nps_count, google_count
+    )
+
+    col1, col2 = st.columns(2)
+    with col1:
+        st.subheader("Trust Level")
+        st.text(f"Trust Level: {trust_level} ({trust_score:.2f})")
+        st.text("Based on:")
+        st.text(f"• Jameda: {jameda_count} reviews")
+        st.text(f"• NPS: {nps_count} responses")
+        st.text(f"• Google: {google_count} reviews")
+
+    with col2:
+        # Display the weighted score
+        st.subheader("Score")
+        st.text("Weighted Score: {}".format(result))
 
     # Generate and display the plot
-    plot_weighted_score(
-        soft_tags, NPS, distance, weight_soft_tags, weight_NPS, weight_distance
-    )
+    plot_weighted_score(jameda, NPS, google, weight_jameda, weight_NPS, weight_google)
 
     # Add score interpretation
     st.subheader("Score Interpretation")
-    if result > 0:
-        st.success(f"Positive score ({result}): Good match")
-    elif result < 0:
-        st.error(f"Negative score ({result}): Not a good match")
-    else:
-        st.info("Neutral score (0): Unclear")
+    col1, col2 = st.columns(2)
+
+    with col1:
+        if result > 0:
+            st.success(f"Positive score ({result}): Good match")
+        elif result < 0:
+            st.error(f"Negative score ({result}): Not a good match")
+        else:
+            st.info("Neutral score (0): Unclear")
+
+    with col2:
+        if trust_level == "High":
+            st.success(f"Trust Level: {trust_level} ({trust_score:.2f})")
+        elif trust_level == "Low":
+            st.error(f"Trust Level: {trust_level} ({trust_score:.2f})")
+        else:
+            st.warning(f"Trust Level: {trust_level} ({trust_score:.2f})")
 
 
 if __name__ == "__main__":
