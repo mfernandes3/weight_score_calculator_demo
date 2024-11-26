@@ -230,7 +230,7 @@ def main():
         st.markdown("""
         ### How the scoring works:
         - **Jameda**: Higher is better (1-5)
-        - **NPS**: Higher is better (0-100)
+        - **NPS**: Higher is better (-100-100)
         - **Google**: Higher is better (1-5)
         
         """)
