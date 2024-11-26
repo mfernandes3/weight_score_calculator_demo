@@ -54,11 +54,19 @@ To export dependencies (if needed):
 uv pip freeze > requirements.txt
 ```
 
+### Locking Dependencies
+
+To lock dependencies declared in a `pyproject.toml`:
+```bash
+uv pip compile pyproject.toml -o requirements.txt
+```
+
 This README now includes:
 - Installation instructions for uv
 - Steps to set up a virtual environment
 - Commands for managing dependencies
 - Basic usage instructions
 - Common development commands
+- Command to lock dependencies declared in a `pyproject.toml`
 
 Feel free to adjust the content based on your specific project needs!
